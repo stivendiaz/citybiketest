@@ -1,6 +1,12 @@
 import React, { Component } from "react";
 import socketIOClient from "socket.io-client";
 import { Map, TileLayer, Marker, Popup } from "react-leaflet";
+import { Icon } from "leaflet";
+
+export const icon = new Icon({
+  iconUrl: '/assets/bike.png',
+  iconSize: [60, 60],
+});
 
 class App extends Component {
   constructor() {
@@ -9,19 +15,21 @@ class App extends Component {
     this.state = {
       response: false,
       endpoint: "http://127.0.0.1:4001",
-      lat: 51.505,
-      lng: -0.09,
-      zoom: 13
+      lat: 25.7760782,
+      lng: -80.194204,
+      zoom: 15
     };
 
   }
   componentDidMount() {
     const { endpoint } = this.state;
     const socket = socketIOClient(endpoint);
-   
+    socket.on('bikes-socket', data => {
+      this.setState({ stations: data });
+    });
   }
   render() {
-    const { response } = this.state;
+    const { stations } = this.state;
     const position = [this.state.lat, this.state.lng]
     return (
 
@@ -32,6 +40,15 @@ class App extends Component {
             attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+          {stations && stations.map( station => (
+            <Marker position={[station.latitude, station.longitude]} icon={icon} key={station.id} >
+              <Popup>
+                <h2>{station.name} Station</h2>
+                <p style={{ fontSize: 15 }}>Address: {station.extra.address}</p>
+                <p style={{ fontSize: 15 }}>Free bikes: {station.free_bikes}</p>
+              </Popup>
+            </Marker>
+          ))}
         </Map>
       </div>
     );
